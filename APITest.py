@@ -1,7 +1,7 @@
-import requests
 import pywhatkit
-from huggingface_hub import InferenceApi  # Example: Hugging Face Inference API
+import requests
 from googlesearch import search
+from huggingface_hub import InferenceApi  # Example: Hugging Face Inference API
 
 # Hugging Face Model
 HUGGING_FACE_API_KEY = "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"
@@ -47,3 +47,50 @@ while True:
     user_input = input("You: ")  # Replace with speech-to-text function if needed
     response = handle_query(user_input)
     print(f"Bot: {response}")
+
+
+    # Stack exchange API (Free for Q&A) technical queries
+    def technical_query_response(query):
+        try:
+            base_url = "https://api.stackexchange.com/2.3/search/advanced"
+            params = {
+                "order": "desc",
+                "sort": "relevance",
+                "q": query,
+                "site": "stackoverflow"
+            }
+            response = requests.get(base_url, params=params)
+            if response.status_code == 200:
+                data = response.json()
+                if data["items"]:
+                    results = [item["link"] for item in data["items"][:5]]  # Top 5 results
+                    return "Here are some relevant results:\n" + "\n".join(results)
+                else:
+                    return "No relevant results found."
+            else:
+                return f"Error: Unable to fetch results ({response.status_code})"
+        except Exception as e:
+            return f"Error with Stack Exchange API: {e}"
+
+
+    # Routing function
+    def handle_query(query):
+        query_lower = query.lower()
+
+        if "search" in query_lower:
+            return search_google(query.replace("search", "").strip())
+        elif "technical" in query_lower or "solve" in query_lower:
+            return technical_query_response(query)
+        elif "play music" in query_lower:
+            song = query.replace("play music", "").strip()
+            return play_music(song)
+        else:
+            return "I'm sorry, I didn't understand that. Please try again."
+
+
+    # Main Program
+    if __name__ == "__main__":
+        while True:
+            user_input = input("You: ")
+            response = handle_query(user_input)
+            print(f"Bot: {response}")
